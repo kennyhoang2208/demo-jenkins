@@ -25,7 +25,7 @@ public class DemoApplicationTests {
     @Test
     public void helloWorld() {
         String username = "test";
-        String expected = "Hello World!!! Test";
+        String expected = "Hello World!!!! Test";
 
         when()
             .get(String.format("http://localhost:%s/hello/%s", port, username))
