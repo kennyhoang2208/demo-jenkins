@@ -63,7 +63,7 @@ pipeline {
       }
       steps {
         container('maven') {
-          dir('charts/jenkins-x-demo') {
+          dir('charts/demo-jenkins') {
             sh "jx step changelog --version v\$(cat ../../VERSION)"
 
             // release the helm chart
@@ -107,7 +107,7 @@ pipeline {
       }
       steps {
         container('maven') {
-          dir('charts/jenkins-x-demo') {
+          dir('charts/demo-jenkins') {
             sh "jx step changelog --version v\$(cat ../../VERSION)"
 
             // release the helm chart
@@ -149,7 +149,7 @@ pipeline {
       }
       steps {
         container('maven') {
-          dir('charts/jenkins-sample-repo') {
+          dir('charts/demo-jenkins') {
             sh "jx step changelog --version v\$(cat ../../VERSION)"
 
             // release the helm chart
