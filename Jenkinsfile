@@ -31,7 +31,96 @@ pipeline {
         }
       }
     }
-    stage('Build Release') {
+
+    // Build Testing
+    stage('Build Testing') {
+      when {
+        branch 'develop'
+      }
+      steps {
+        container('maven') {
+
+          // ensure we're not on a detached head
+          sh "git checkout develop"
+          sh "git config --global credential.helper store"
+          sh "jx step git credentials"
+
+          // so we can retrieve the version in later steps
+          sh "echo \$(jx-release-version)'-testing' > VERSION"
+          sh "mvn versions:set -DnewVersion=\$(cat VERSION)"
+          sh "jx step tag --version \$(cat VERSION)"
+          sh "mvn clean deploy"
+          sh "skaffold version"
+          sh "export VERSION=`cat VERSION` && skaffold build -f skaffold.yaml"
+          sh "jx step post build --image $DOCKER_REGISTRY/$ORG/$APP_NAME:\$(cat VERSION)"
+        }
+      }
+    }
+
+    stage('Promote to Testing') {
+      when {
+        branch 'develop'
+      }
+      steps {
+        container('maven') {
+          dir('charts/jenkins-x-demo') {
+            sh "jx step changelog --version v\$(cat ../../VERSION)"
+
+            // release the helm chart
+            sh "jx step helm release"
+
+            // promote through 'testing' promotion Environment
+            sh "jx promote -b --env testing --timeout 1h --version \$(cat ../../VERSION)"
+          }
+        }
+      }
+    }
+
+    // Build Sanbox
+    stage('Build Sanbox') {
+      when {
+        branch 'sanbox'
+      }
+      steps {
+        container('maven') {
+
+          // ensure we're not on a detached head
+          sh "git checkout sanbox"
+          sh "git config --global credential.helper store"
+          sh "jx step git credentials"
+
+          // so we can retrieve the version in later steps
+          sh "echo \$(jx-release-version)'-sanbox' > VERSION"
+          sh "mvn versions:set -DnewVersion=\$(cat VERSION)"
+          sh "jx step tag --version \$(cat VERSION)"
+          sh "mvn clean deploy"
+          sh "skaffold version"
+          sh "export VERSION=`cat VERSION` && skaffold build -f skaffold.yaml"
+          sh "jx step post build --image $DOCKER_REGISTRY/$ORG/$APP_NAME:\$(cat VERSION)"
+        }
+      }
+    }
+
+    stage('Promote to Sanbox') {
+      when {
+        branch 'sanbox'
+      }
+      steps {
+        container('maven') {
+          dir('charts/jenkins-x-demo') {
+            sh "jx step changelog --version v\$(cat ../../VERSION)"
+
+            // release the helm chart
+            sh "jx step helm release"
+
+            // promote through 'sanbox' promotion Environment
+            sh "jx promote -b --env sanbox --timeout 1h --version \$(cat ../../VERSION)"
+          }
+        }
+      }
+    }
+
+    stage('Build Staging') {
       when {
         branch 'master'
       }
@@ -54,20 +143,20 @@ pipeline {
         }
       }
     }
-    stage('Promote to Environments') {
+    stage('Promote to Staging') {
       when {
         branch 'master'
       }
       steps {
         container('maven') {
-          dir('charts/demo-jenkins') {
+          dir('charts/jenkins-sample-repo') {
             sh "jx step changelog --version v\$(cat ../../VERSION)"
 
             // release the helm chart
             sh "jx step helm release"
 
             // promote through all 'Auto' promotion Environments
-            sh "jx promote -b --all-auto --timeout 1h --version \$(cat ../../VERSION)"
+            sh "jx promote -b --env staging --timeout 1h --version \$(cat ../../VERSION)"
           }
         }
       }
