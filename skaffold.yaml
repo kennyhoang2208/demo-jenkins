@@ -1,0 +1,30 @@
+apiVersion: skaffold/v1beta2
+kind: Config
+build:
+  artifacts:
+  - image: changeme
+    context: .
+    docker: {}
+  tagPolicy:
+    envTemplate:
+      template: '{{.DOCKER_REGISTRY}}/kennyhoang2208/demo-jenkins:{{.VERSION}}'
+  local: {}
+deploy:
+  kubectl: {}
+profiles:
+- name: dev
+  build:
+    artifacts:
+    - docker: {}
+    tagPolicy:
+      envTemplate:
+        template: '{{.DOCKER_REGISTRY}}/kennyhoang2208/demo-jenkins:{{.DIGEST_HEX}}'
+    local: {}
+  deploy:
+    helm:
+      releases:
+      - name: demo-jenkins
+        chartPath: charts/demo-jenkins
+        setValueTemplates:
+          image.repository: '{{.DOCKER_REGISTRY}}/kennyhoang2208/demo-jenkins'
+          image.tag: '{{.DIGEST_HEX}}'
