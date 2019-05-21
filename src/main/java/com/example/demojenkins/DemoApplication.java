@@ -18,10 +18,10 @@ public class DemoApplication {
      * Hello world api sample
      * @return Hello World! string
      */
-    @GetMapping("/helloworld/{username}")
+    @GetMapping("/hello/{username}")
     public String helloWorld(@PathVariable String username) {
         String name = getUserInfoByUsername(username);
-        return "Hello World! " + name;
+        return "Hello World!!! " + name;
     }
 
     private String getUserInfoByUsername(String username) {
